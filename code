@@ -1,0 +1,26 @@
+#import libraries
+import matplotlib.pyplot as plt
+import pandas as pd
+import fiona
+import geopandas as gpd
+from shapely.geometry import Point
+
+#import driver to read KML
+gpd.io.file.fiona.drvsupport.supported_drivers['KML'] = 'rw'
+
+#Import administrative boundaries of CDMX
+cdmx = gpd.read_file("coloniascdmx.kml", driver='KML')
+
+#Import crimes in CDMX 2016-2019
+crime = pd.read_csv("carpetas-de-investigacion-pgj-de-la-ciudad-de-mexico.csv")
+
+#Transform crimes in CDMX 2016-2019 into a geodataframe
+geometry = [Point(xy) for xy in zip(crime.longitud, crime.latitud)]
+crs = {'init': 'epsg:4326'}
+crime_plot = gpd.GeoDataFrame(crime, crs=crs, geometry=geometry)
+
+#Adjust crs reference
+crime_plot = crime_plot.to_crs(cdmx.crs)
+
+#Plot map of crimes in CDMX 2016-2019 with administrative boundaries as base
+crime_plot.plot(ax=(cdmx.plot(facecolor="none", edgecolor="black", figsize=(70,100))), color='black');
